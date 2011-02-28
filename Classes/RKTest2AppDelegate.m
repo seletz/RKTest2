@@ -6,72 +6,77 @@
 //  Copyright 2011 Nexiles GmbH. All rights reserved.
 //
 
+#include <RestKit/RestKit.h>
+#include <RestKit/ObjectMapping/ObjectMapping.h>
+#include <RestKit/CoreData/CoreData.h>
+
 #import "RKTest2AppDelegate.h"
+#import "Project.h"
+#import "Task.h"
 
 @implementation RKTest2AppDelegate
 
 @synthesize window;
 
-
 #pragma mark -
 #pragma mark Application lifecycle
 
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {    
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+{
+
+    NSLog(@"%s", __func__);
+
+    // Initialize RestKit
+    RKObjectManager *objectManager = [RKObjectManager objectManagerWithBaseURL:@"http://127.0.0.1:8080"];
+
+    // Initialize object store
+    objectManager.objectStore = [[[RKManagedObjectStore alloc] initWithStoreFilename:@"RKTest2.sqlite"] autorelease];
+
+    RKDynamicRouter *router =  (RKDynamicRouter *)objectManager.router;
+    //[router routeClass: [Project class] toResourcePath: @"/projects/(identifier)"];
+    //[router routeClass: [Task class] toResourcePath: @"/tasks/(identifier)"];
+    [router routeClass: [Project class] toResourcePath: @"/projects"];
+    [router routeClass: [Task class] toResourcePath: @"/tasks"];
+
     
-    // Override point for customization after application launch.
+    [objectManager loadObjectsAtResourcePath:@"/tasks"
+                               objectClass:[Task class]
+                                  delegate:self];
+
+    [objectManager loadObjectsAtResourcePath:@"/projects"
+                                 objectClass:[Project class]
+                                    delegate:self];
     
-    [self.window makeKeyAndVisible];
-    
+    //[objectManager loadObjectsAtResourcePath:@"/projects/1"
+                                 //objectClass:[Project class]
+                                    //delegate:self];
+
+    [self.window makeKeyAndVisible];    
     return YES;
 }
 
+#pragma mark -
+#pragma mark RKObjectLoaderDelegate methods
 
-- (void)applicationWillResignActive:(UIApplication *)application {
-    /*
-     Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
-     Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
-     */
+- (void)objectLoader:(RKObjectLoader*)objectLoader didLoadObjects:(NSArray*)objects
+{
+    NSLog(@"%s", __func__);
+    NSLog(@"%s: objects=%@", __func__, objects);
 }
 
-
-- (void)applicationDidEnterBackground:(UIApplication *)application {
-    /*
-     Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later. 
-     If your application supports background execution, called instead of applicationWillTerminate: when the user quits.
-     */
+- (void)objectLoader:(RKObjectLoader*)objectLoader didFailWithError:(NSError*)error
+{
+    NSLog(@"%s", __func__);
+    NSLog(@"%s: error=%@", __func__, error);
+    
+    UIAlertView* alert = [[[UIAlertView alloc] initWithTitle:@"Error" message:[error localizedDescription] delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] autorelease];
+    [alert show];
 }
 
-
-- (void)applicationWillEnterForeground:(UIApplication *)application {
-    /*
-     Called as part of  transition from the background to the inactive state: here you can undo many of the changes made on entering the background.
-     */
-}
-
-
-- (void)applicationDidBecomeActive:(UIApplication *)application {
-    /*
-     Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-     */
-}
-
-
-- (void)applicationWillTerminate:(UIApplication *)application {
-    /*
-     Called when the application is about to terminate.
-     See also applicationDidEnterBackground:.
-     */
-}
 
 
 #pragma mark -
 #pragma mark Memory management
-
-- (void)applicationDidReceiveMemoryWarning:(UIApplication *)application {
-    /*
-     Free up as much memory as possible by purging cached data objects that can be recreated (or reloaded from disk) later.
-     */
-}
 
 
 - (void)dealloc {
@@ -79,5 +84,6 @@
     [super dealloc];
 }
 
-
 @end
+
+// vim: set sw=4 ts=4 expandtab:

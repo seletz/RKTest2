@@ -7,9 +7,8 @@
 //
 
 #import <UIKit/UIKit.h>
-#include <RestKit/RestKit.h>
 
-@interface RKTest2AppDelegate : NSObject <UIApplicationDelegate> {
+@interface RKTest2AppDelegate : NSObject <UIApplicationDelegate, RKObjectLoaderDelegate> {
     UIWindow *window;
 }
 
